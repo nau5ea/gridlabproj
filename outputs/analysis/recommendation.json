@@ -1,0 +1,27 @@
+{
+  "recommended_xfmr_kva": 25.0,
+  "next_smaller_xfmr_kva": 15.0,
+  "next_smaller_first_limiting_condition": {
+    "xfmr_kva": 15.0,
+    "case": "constant_current",
+    "condition": "loading: first exceedance 2026-07-15 01:28:00",
+    "peak_loading_pct": 137.815,
+    "min_voltage_pu": 0.97173
+  },
+  "candidates_tested_kva": [
+    10.0,
+    15.0,
+    25.0,
+    37.5
+  ],
+  "candidates_passing_all_cases_kva": [
+    25.0,
+    37.5
+  ],
+  "criteria": {
+    "loading_limit_pct": 100.0,
+    "voltage_min_pu": 0.95,
+    "voltage_max_pu": 1.05,
+    "interval": "one minute per recorder sample"
+  }
+}

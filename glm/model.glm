@@ -1,0 +1,499 @@
+// ============================================================================
+// EE 5/430 term project -- three-house residential load model (skeleton)
+//
+// Run from the repository root, e.g.
+//   gridlabd -W . glm/cases/constant_power.glm
+//
+// The four case files define CASE_NAME, the ZIP fractions, and XFMR_KVA before
+// including this file.  Defaults below make the file usable directly as well.
+// ============================================================================
+
+#ifndef CASE_NAME
+#define CASE_NAME=baseline
+#endif
+
+#ifndef XFMR_KVA
+#define XFMR_KVA=25
+#endif
+
+#ifndef ZIP_POWER_FRACTION
+#define ZIP_POWER_FRACTION=1.0
+#endif
+
+#ifndef ZIP_CURRENT_FRACTION
+#define ZIP_CURRENT_FRACTION=0.0
+#endif
+
+#ifndef ZIP_IMPEDANCE_FRACTION
+#define ZIP_IMPEDANCE_FRACTION=0.0
+#endif
+
+#ifndef POWER_FACTOR
+#define POWER_FACTOR=0.95
+#endif
+
+#set minimum_timestep=60
+#set randomseed=530
+
+clock {
+	timezone PST+8PDT;
+	starttime "2026-07-15 00:00:00 PDT";
+	stoptime  "2026-07-16 00:00:00 PDT";
+}
+
+module powerflow {
+	solver_method NR;
+	NR_iteration_limit 50;
+};
+
+// No implicit appliances are added to the house objects.  The only household
+// demand is the explicit triplex_load, and the only water-heating demand is the
+// explicit waterheater child.
+module residential {
+	implicit_enduses NONE;
+};
+
+module tape;
+
+// ----------------------------------------------------------------------------
+// Shared single-phase center-tapped transformer
+// ----------------------------------------------------------------------------
+object transformer_configuration {
+	name xfmr_config;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7200 V;
+	secondary_voltage 120 V;          // 120 V leg-to-neutral; 240 V leg-to-leg
+	power_rating ${XFMR_KVA} kVA;
+	powerC_rating ${XFMR_KVA} kVA;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node {
+	name source_bus;
+	phases CN;
+	nominal_voltage 7200 V;
+	bustype SWING;
+}
+
+object transformer {
+	name xfmr;
+	phases CS;
+	from source_bus;
+	to secondary_bus;
+	configuration xfmr_config;
+}
+
+object triplex_node {
+	name secondary_bus;
+	phases CS;
+	nominal_voltage 120 V;
+}
+
+// ----------------------------------------------------------------------------
+// Service-drop conductor and configuration
+// ----------------------------------------------------------------------------
+object triplex_line_conductor {
+	name triplex_4_0_aa;
+	resistance 0.48;
+	geometric_mean_radius 0.0158;
+}
+
+object triplex_line_configuration {
+	name triplex_service_config;
+	conductor_1 triplex_4_0_aa;
+	conductor_2 triplex_4_0_aa;
+	conductor_N triplex_4_0_aa;
+	insulation_thickness 0.08;
+	diameter 0.522;
+}
+
+// ----------------------------------------------------------------------------
+// Transformer measurement boundary
+// power_in is the primary-side input (used for loading); power_out is the
+// secondary-side output.  The difference contains transformer losses.
+// ----------------------------------------------------------------------------
+object recorder {
+	parent xfmr;
+	property "power_in,power_out,current_in_A,current_in_B,current_in_C";
+	interval 60;
+	file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_transformer.csv";
+}
+
+// ============================================================================
+// House 1 service
+// ============================================================================
+object triplex_line {
+	name service_drop_1;
+	from secondary_bus;
+	to service_meter_1;
+	phases CS;
+	length 50 ft;
+	configuration triplex_service_config;
+}
+
+object triplex_meter {
+	name service_meter_1;
+	phases CS;
+	nominal_voltage 120 V;
+}
+
+object triplex_load {
+	name house_load_1;
+	parent service_meter_1;
+	phases CS;
+	nominal_voltage 120 V;
+
+	// Nominal apparent-power bases are driven by the player below (VA).
+	base_power_1 0 VA;
+	base_power_2 0 VA;
+	base_power_12 0 VA;
+
+	// Common 0.95 lagging power factor for every ZIP component.
+	power_pf_1 ${POWER_FACTOR};
+	power_pf_2 ${POWER_FACTOR};
+	power_pf_12 ${POWER_FACTOR};
+	current_pf_1 ${POWER_FACTOR};
+	current_pf_2 ${POWER_FACTOR};
+	current_pf_12 ${POWER_FACTOR};
+	impedance_pf_1 ${POWER_FACTOR};
+	impedance_pf_2 ${POWER_FACTOR};
+	impedance_pf_12 ${POWER_FACTOR};
+
+	// Case-selected ZIP fractions.  The same fractions are applied to all three
+	// household loads.  Phase 12 base power is zero, so its fractions are inert.
+	power_fraction_1 ${ZIP_POWER_FRACTION};
+	power_fraction_2 ${ZIP_POWER_FRACTION};
+	power_fraction_12 ${ZIP_POWER_FRACTION};
+	current_fraction_1 ${ZIP_CURRENT_FRACTION};
+	current_fraction_2 ${ZIP_CURRENT_FRACTION};
+	current_fraction_12 ${ZIP_CURRENT_FRACTION};
+	impedance_fraction_1 ${ZIP_IMPEDANCE_FRACTION};
+	impedance_fraction_2 ${ZIP_IMPEDANCE_FRACTION};
+	impedance_fraction_12 ${ZIP_IMPEDANCE_FRACTION};
+
+	object player {
+		name house_load_1_player;
+		property "base_power_1,base_power_2";
+		file "data/players/house1_load.player";
+		loop 0;
+	};
+
+	object recorder {
+		name house_load_1_recorder;
+		property "measured_power";
+		interval 60;
+		file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_house1_load.csv";
+	};
+}
+
+object house {
+	name house_1;
+	parent service_meter_1;
+
+	// Thermal shell only; HVAC and implicit appliances are disabled.
+	floor_area 2000 sf;
+	number_of_stories 1;
+	ceiling_height 8 ft;
+	air_temperature 70 degF;
+	mass_temperature 70 degF;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	system_mode OFF;
+	thermostat_control NONE;
+
+	object waterheater {
+		name wh_1;
+		waterheater_model ONEZNODE;
+		heat_mode ELECTRIC;
+		location INSIDE;
+		tank_setpoint 120 degF;
+		thermostat_deadband 2 degF;
+		tank_volume 50 gal;
+		tank_height 3.78 ft;
+		tank_diameter 1.5 ft;
+		heating_element_capacity 4.5 kW;
+		inlet_water_temperature 60 degF;
+		// GridLAB-D publishes this property as Btu*h/degF, but the water-heater
+		// equations use it as the usual tank UA in Btu/(h*degF).
+		tank_UA 3.3;
+		// Documented initial state for this skeleton: tank starts at setpoint.
+		temperature 120 degF;
+
+		object player {
+			name wh_1_player;
+			property "water_demand";
+			file "data/players/house1_water.player";
+			loop 0;
+		};
+
+		object recorder {
+			name wh_1_recorder;
+			property "actual_load,temperature,water_demand,is_waterheater_on";
+			interval 60;
+			file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_wh1.csv";
+		};
+	};
+
+	object recorder {
+		name house_1_recorder;
+		property "air_temperature";
+		interval 60;
+		file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_house1_thermal.csv";
+	};
+}
+
+object recorder {
+	parent service_meter_1;
+	property "measured_power,measured_voltage_1,measured_voltage_2,measured_current_1,measured_current_2";
+	interval 60;
+	file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_service1.csv";
+}
+
+// ============================================================================
+// House 2 service
+// ============================================================================
+object triplex_line {
+	name service_drop_2;
+	from secondary_bus;
+	to service_meter_2;
+	phases CS;
+	length 75 ft;
+	configuration triplex_service_config;
+}
+
+object triplex_meter {
+	name service_meter_2;
+	phases CS;
+	nominal_voltage 120 V;
+}
+
+object triplex_load {
+	name house_load_2;
+	parent service_meter_2;
+	phases CS;
+	nominal_voltage 120 V;
+
+	base_power_1 0 VA;
+	base_power_2 0 VA;
+	base_power_12 0 VA;
+
+	power_pf_1 ${POWER_FACTOR};
+	power_pf_2 ${POWER_FACTOR};
+	power_pf_12 ${POWER_FACTOR};
+	current_pf_1 ${POWER_FACTOR};
+	current_pf_2 ${POWER_FACTOR};
+	current_pf_12 ${POWER_FACTOR};
+	impedance_pf_1 ${POWER_FACTOR};
+	impedance_pf_2 ${POWER_FACTOR};
+	impedance_pf_12 ${POWER_FACTOR};
+
+	power_fraction_1 ${ZIP_POWER_FRACTION};
+	power_fraction_2 ${ZIP_POWER_FRACTION};
+	power_fraction_12 ${ZIP_POWER_FRACTION};
+	current_fraction_1 ${ZIP_CURRENT_FRACTION};
+	current_fraction_2 ${ZIP_CURRENT_FRACTION};
+	current_fraction_12 ${ZIP_CURRENT_FRACTION};
+	impedance_fraction_1 ${ZIP_IMPEDANCE_FRACTION};
+	impedance_fraction_2 ${ZIP_IMPEDANCE_FRACTION};
+	impedance_fraction_12 ${ZIP_IMPEDANCE_FRACTION};
+
+	object player {
+		name house_load_2_player;
+		property "base_power_1,base_power_2";
+		file "data/players/house2_load.player";
+		loop 0;
+	};
+
+	object recorder {
+		name house_load_2_recorder;
+		property "measured_power";
+		interval 60;
+		file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_house2_load.csv";
+	};
+}
+
+object house {
+	name house_2;
+	parent service_meter_2;
+
+	floor_area 2200 sf;
+	number_of_stories 1;
+	ceiling_height 8 ft;
+	air_temperature 70 degF;
+	mass_temperature 70 degF;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	system_mode OFF;
+	thermostat_control NONE;
+
+	object waterheater {
+		name wh_2;
+		waterheater_model ONEZNODE;
+		heat_mode ELECTRIC;
+		location INSIDE;
+		tank_setpoint 120 degF;
+		thermostat_deadband 2 degF;
+		tank_volume 50 gal;
+		tank_height 3.78 ft;
+		tank_diameter 1.5 ft;
+		heating_element_capacity 4.5 kW;
+		inlet_water_temperature 60 degF;
+		tank_UA 3.3;
+		temperature 120 degF;
+
+		object player {
+			name wh_2_player;
+			property "water_demand";
+			file "data/players/house2_water.player";
+			loop 0;
+		};
+
+		object recorder {
+			name wh_2_recorder;
+			property "actual_load,temperature,water_demand,is_waterheater_on";
+			interval 60;
+			file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_wh2.csv";
+		};
+	};
+
+	object recorder {
+		name house_2_recorder;
+		property "air_temperature";
+		interval 60;
+		file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_house2_thermal.csv";
+	};
+}
+
+object recorder {
+	parent service_meter_2;
+	property "measured_power,measured_voltage_1,measured_voltage_2,measured_current_1,measured_current_2";
+	interval 60;
+	file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_service2.csv";
+}
+
+// ============================================================================
+// House 3 service
+// ============================================================================
+object triplex_line {
+	name service_drop_3;
+	from secondary_bus;
+	to service_meter_3;
+	phases CS;
+	length 100 ft;
+	configuration triplex_service_config;
+}
+
+object triplex_meter {
+	name service_meter_3;
+	phases CS;
+	nominal_voltage 120 V;
+}
+
+object triplex_load {
+	name house_load_3;
+	parent service_meter_3;
+	phases CS;
+	nominal_voltage 120 V;
+
+	base_power_1 0 VA;
+	base_power_2 0 VA;
+	base_power_12 0 VA;
+
+	power_pf_1 ${POWER_FACTOR};
+	power_pf_2 ${POWER_FACTOR};
+	power_pf_12 ${POWER_FACTOR};
+	current_pf_1 ${POWER_FACTOR};
+	current_pf_2 ${POWER_FACTOR};
+	current_pf_12 ${POWER_FACTOR};
+	impedance_pf_1 ${POWER_FACTOR};
+	impedance_pf_2 ${POWER_FACTOR};
+	impedance_pf_12 ${POWER_FACTOR};
+
+	power_fraction_1 ${ZIP_POWER_FRACTION};
+	power_fraction_2 ${ZIP_POWER_FRACTION};
+	power_fraction_12 ${ZIP_POWER_FRACTION};
+	current_fraction_1 ${ZIP_CURRENT_FRACTION};
+	current_fraction_2 ${ZIP_CURRENT_FRACTION};
+	current_fraction_12 ${ZIP_CURRENT_FRACTION};
+	impedance_fraction_1 ${ZIP_IMPEDANCE_FRACTION};
+	impedance_fraction_2 ${ZIP_IMPEDANCE_FRACTION};
+	impedance_fraction_12 ${ZIP_IMPEDANCE_FRACTION};
+
+	object player {
+		name house_load_3_player;
+		property "base_power_1,base_power_2";
+		file "data/players/house3_load.player";
+		loop 0;
+	};
+
+	object recorder {
+		name house_load_3_recorder;
+		property "measured_power";
+		interval 60;
+		file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_house3_load.csv";
+	};
+}
+
+object house {
+	name house_3;
+	parent service_meter_3;
+
+	floor_area 1800 sf;
+	number_of_stories 1;
+	ceiling_height 8 ft;
+	air_temperature 70 degF;
+	mass_temperature 70 degF;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	system_mode OFF;
+	thermostat_control NONE;
+
+	object waterheater {
+		name wh_3;
+		waterheater_model ONEZNODE;
+		heat_mode ELECTRIC;
+		location INSIDE;
+		tank_setpoint 120 degF;
+		thermostat_deadband 2 degF;
+		tank_volume 50 gal;
+		tank_height 3.78 ft;
+		tank_diameter 1.5 ft;
+		heating_element_capacity 4.5 kW;
+		inlet_water_temperature 60 degF;
+		tank_UA 3.3;
+		temperature 120 degF;
+
+		object player {
+			name wh_3_player;
+			property "water_demand";
+			file "data/players/house3_water.player";
+			loop 0;
+		};
+
+		object recorder {
+			name wh_3_recorder;
+			property "actual_load,temperature,water_demand,is_waterheater_on";
+			interval 60;
+			file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_wh3.csv";
+		};
+	};
+
+	object recorder {
+		name house_3_recorder;
+		property "air_temperature";
+		interval 60;
+		file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_house3_thermal.csv";
+	};
+}
+
+object recorder {
+	parent service_meter_3;
+	property "measured_power,measured_voltage_1,measured_voltage_2,measured_current_1,measured_current_2";
+	interval 60;
+	file "outputs/${CASE_NAME}_xfmr${XFMR_KVA}kva_service3.csv";
+}

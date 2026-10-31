@@ -1,0 +1,7 @@
+// ZIP case 1: constant power (P = 1, I = 0, Z = 0)
+#define CASE_NAME=constant_power
+#define ZIP_POWER_FRACTION=1.0
+#define ZIP_CURRENT_FRACTION=0.0
+#define ZIP_IMPEDANCE_FRACTION=0.0
+#define XFMR_KVA=25
+#include "glm/model.glm"

@@ -1,0 +1,7 @@
+// ZIP case 4: 40% impedance, 30% current, 30% power
+#define CASE_NAME=mixed
+#define ZIP_POWER_FRACTION=0.30
+#define ZIP_CURRENT_FRACTION=0.30
+#define ZIP_IMPEDANCE_FRACTION=0.40
+#define XFMR_KVA=25
+#include "glm/model.glm"

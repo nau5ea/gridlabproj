@@ -1,0 +1,27 @@
+{
+  "seed": 530,
+  "start": "2026-07-15 00:00:00",
+  "periods": 1441,
+  "power_factor": 0.95,
+  "note": "Synthetic placeholders; replace data/input with the course datasets.",
+  "houses": {
+    "house1": {
+      "peak_demand_kw": 4.8096,
+      "daily_energy_kwh": 27.6884,
+      "peak_water_gpm": 1.9019,
+      "daily_water_gal": 33.9893
+    },
+    "house2": {
+      "peak_demand_kw": 5.1347,
+      "daily_energy_kwh": 32.0332,
+      "peak_water_gpm": 2.0915,
+      "daily_water_gal": 41.1923
+    },
+    "house3": {
+      "peak_demand_kw": 3.1739,
+      "daily_energy_kwh": 22.2486,
+      "peak_water_gpm": 1.7112,
+      "daily_water_gal": 37.7038
+    }
+  }
+}

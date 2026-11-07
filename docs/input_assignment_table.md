@@ -1,16 +1,18 @@
 # Input files, units, and GridLAB-D object assignments
 
-## Household demand (excluding water heating)
+## Selected household demand (excluding water heating)
 
-The placeholder files in `data/input/` have the same structure expected for the
-course datasets.  Replace them with the supplied files, then regenerate the
-player files with `python3 scripts/generate_profiles.py`.
+The supplied pool contains 120 one-minute profiles for 2025-09-01:
+`data/input/house_profile_<id>.csv`, with columns `Time` and
+`house power (kW)`.  The three-house model uses the first three IDs.  The
+selection is recorded in `data/selected_profiles.json` and normalized copies are
+written to `data/selected/houseN_demand.csv`.
 
-| House | Input file | Unit | GridLAB-D object | Property | Conversion used |
+| House | Supplied file | Unit | GridLAB-D object | Property | Conversion used |
 |---|---|---|---|---|---|
-| 1 | `data/input/house1_demand.csv` | kW (nominal real power) | `house_load_1` (`triplex_load`) | `base_power_1`, `base_power_2` | `base_power_leg = (P_kW * 1000 / 2) / 0.95` VA |
-| 2 | `data/input/house2_demand.csv` | kW (nominal real power) | `house_load_2` (`triplex_load`) | `base_power_1`, `base_power_2` | same |
-| 3 | `data/input/house3_demand.csv` | kW (nominal real power) | `house_load_3` (`triplex_load`) | `base_power_1`, `base_power_2` | same |
+| 1 | `data/input/house_profile_1.csv` | kW (nominal real power) | `house_load_1` (`triplex_load`) | `base_power_1`, `base_power_2` | `base_power_leg = (P_kW * 1000 / 2) / 0.95` VA |
+| 2 | `data/input/house_profile_2.csv` | kW (nominal real power) | `house_load_2` (`triplex_load`) | `base_power_1`, `base_power_2` | same |
+| 3 | `data/input/house_profile_3.csv` | kW (nominal real power) | `house_load_3` (`triplex_load`) | `base_power_1`, `base_power_2` | same |
 
 The player files written to `data/players/houseN_load.player` contain two
 columns: `base_power_1` and `base_power_2` in VA.  The two legs are assumed
@@ -20,11 +22,24 @@ study assumption, not a property inferred from the demand dataset.
 
 ## Water draw
 
-| House | Input file | Unit | GridLAB-D object | Property | Conversion used |
+Water draw comes from the supplied `data/input/water_draw.csv`, a headerless
+two-column file (`timestamp`, `water_gpm`).  It has 1445 rows covering 1440
+unique one-minute timestamps; the five duplicate timestamps are simultaneous
+draw events and are summed.  After summation the profile is 83.979 gal/day, with
+65 nonzero draw minutes and a peak of 2.994 gpm.  Normalized copies are written
+to `data/selected/houseN_water.csv`.
+
+Only one water-draw profile is supplied for the three-house model.  By default
+(`--water-mode shared`) the same profile is applied to each water heater, so each
+service sees 83.979 gal/day and the modeled aggregate is 251.937 gal/day.  The
+alternative `--water-mode split` treats the file as an aggregate three-house draw
+and divides it equally (27.993 gal/day per heater).
+
+| House | Source | Unit | GridLAB-D object | Property | Conversion used |
 |---|---|---|---|---|---|
-| 1 | `data/input/house1_water.csv` | gal/min (gpm) | `wh_1` (`waterheater`) | `water_demand` | none; player supplies gpm directly |
-| 2 | `data/input/house2_water.csv` | gal/min (gpm) | `wh_2` (`waterheater`) | `water_demand` | none |
-| 3 | `data/input/house3_water.csv` | gal/min (gpm) | `wh_3` (`waterheater`) | `water_demand` | none |
+| 1 | `data/input/water_draw.csv` | gal/min (gpm) | `wh_1` (`waterheater`) | `water_demand` | none; player supplies gpm directly |
+| 2 | `data/input/water_draw.csv` | gal/min (gpm) | `wh_2` (`waterheater`) | `water_demand` | none |
+| 3 | `data/input/water_draw.csv` | gal/min (gpm) | `wh_3` (`waterheater`) | `water_demand` | none |
 
 The water-draw profile is not an electrical power input.  It drives the
 water-heater thermal model, which then determines the electrical element demand.
@@ -85,11 +100,10 @@ transformers.  The selection criterion is:
 - all monitored service leg voltages between 0.95 and 1.05 p.u. on a 120 V
   line-to-neutral base.
 
-## Placeholder data notice
+## Data status
 
-The course datasets were not present in this repository when the skeleton was
-created.  `scripts/generate_profiles.py` creates deterministic synthetic
-profiles with seed 530 so the model, runners, analysis, and figures can be
-exercised.  The metadata is written to `data/profiles_metadata.json`.  Replace
-the CSV inputs with the official data and rerun the generator before using any
-numerical result in the project report.
+The household demand profiles and the water-draw profile are the supplied data.
+The simulated day is 2025-09-01, matching both sources.  The main data
+assumption is the water-draw assignment: one supplied profile is shared by all
+three water heaters in the default mode.  See `results.txt` for the split-mode
+sensitivity and the other flagged limitations.

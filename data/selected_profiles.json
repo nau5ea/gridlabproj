@@ -1,0 +1,44 @@
+{
+  "selection_rule": "first three available house_profile_<id>.csv files in data/input",
+  "selected_house_ids": [
+    1,
+    2,
+    3
+  ],
+  "source_dir": "data/input",
+  "simulation_start": "2025-09-01 00:00:00",
+  "periods": 1441,
+  "power_factor": 0.95,
+  "conversion": "base_power_1 = base_power_2 = demand_kw*1000/2/0.95 VA",
+  "water_source": "data/input/water_draw.csv",
+  "water_assignment": "supplied water_draw.csv; duplicate timestamps summed; same profile applied to all three water heaters",
+  "water_mode": "shared",
+  "water_duplicate_timestamps_summed": 5,
+  "water_total_gal": 83.979,
+  "houses": {
+    "house1": {
+      "source_file": "data/input/house_profile_1.csv",
+      "peak_demand_kw": 0.676044,
+      "daily_energy_kwh": 9.699055,
+      "minimum_demand_kw": 0.287949,
+      "peak_water_gpm": 2.994,
+      "daily_water_gal": 83.979
+    },
+    "house2": {
+      "source_file": "data/input/house_profile_2.csv",
+      "peak_demand_kw": 4.979664,
+      "daily_energy_kwh": 30.786646,
+      "minimum_demand_kw": 0.563653,
+      "peak_water_gpm": 2.994,
+      "daily_water_gal": 83.979
+    },
+    "house3": {
+      "source_file": "data/input/house_profile_3.csv",
+      "peak_demand_kw": 0.664094,
+      "daily_energy_kwh": 8.39148,
+      "minimum_demand_kw": 0.179571,
+      "peak_water_gpm": 2.994,
+      "daily_water_gal": 83.979
+    }
+  }
+}

@@ -26,13 +26,15 @@ from gridlab_io import (
 FIG_DIR = ROOT / "figures"
 ANALYSIS_DIR = OUTPUT_DIR / "analysis"
 ZIP_CASES = ["constant_power", "constant_current", "constant_impedance", "mixed"]
+SIM_START = pd.Timestamp("2025-09-01 00:00:00")
+SIM_END = SIM_START + pd.Timedelta(days=1)
 
 
 def _time_axis(ax: plt.Axes) -> None:
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=3))
     ax.grid(True, alpha=0.25)
-    ax.set_xlim(pd.Timestamp("2026-07-15 00:00:00"), pd.Timestamp("2026-07-16 00:00:00"))
+    ax.set_xlim(SIM_START, SIM_END)
 
 
 def _load(case: str, rating: float):

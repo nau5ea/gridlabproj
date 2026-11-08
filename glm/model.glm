@@ -1,11 +1,15 @@
 // ============================================================================
-// EE 5/430 term project -- three-house residential load model (skeleton)
+// EE 5/430 term project -- three-house residential load model
 //
 // Run from the repository root, e.g.
 //   gridlabd -W . glm/cases/constant_power.glm
 //
 // The four case files define CASE_NAME, the ZIP fractions, and XFMR_KVA before
 // including this file.  Defaults below make the file usable directly as well.
+//
+// Player files are prepared by scripts/prepare_real_profiles.py from a
+// documented three-house subset of data/input/house_profile_*.csv.  The
+// simulated day is 2025-09-01, matching the supplied profiles.
 // ============================================================================
 
 #ifndef CASE_NAME
@@ -37,8 +41,8 @@
 
 clock {
 	timezone PST+8PDT;
-	starttime "2026-07-15 00:00:00 PDT";
-	stoptime  "2026-07-16 00:00:00 PDT";
+	starttime "2025-09-01 00:00:00 PDT";
+	stoptime  "2025-09-02 00:00:00 PDT";
 }
 
 module powerflow {

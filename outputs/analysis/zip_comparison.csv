@@ -1,5 +1,5 @@
 xfmr_kva,case,peak_loading_pct,peak_transformer_kva,peak_time,min_voltage_v,min_voltage_pu,max_voltage_pu,min_voltage_ll_pu,max_voltage_ll_pu,transformer_peak_current_a,overload_minutes,first_overload,first_voltage_violation,pass,limiting_condition,transformer_energy_kwh,service_energy_kwh,loss_energy_kwh
-25.0,constant_power,83.687,20.922,2026-07-15 07:14:00,117.89,0.98242,0.99866,0.98242,0.99866,2.91,0,,,True,none,101.845,101.433,0.4113
-25.0,constant_current,83.24,20.81,2026-07-15 07:14:00,117.933,0.98277,0.99866,0.98277,0.99866,2.89,0,,,True,none,101.253,100.848,0.4059
-25.0,constant_impedance,82.663,20.666,2026-07-15 07:14:00,117.932,0.98277,0.99866,0.98277,0.99866,2.87,0,,,True,none,100.677,100.276,0.4004
-25.0,mixed,83.139,20.785,2026-07-15 07:14:00,117.92,0.98267,0.99866,0.98267,0.99866,2.89,0,,,True,none,101.197,100.791,0.4054
+25.0,constant_power,76.889,19.222,2025-09-01 06:07:00,118.127,0.98439,0.99871,0.98439,0.99871,2.67,0,,,True,none,89.677,89.268,0.4095
+25.0,constant_current,76.569,19.142,2025-09-01 06:05:00,118.144,0.98453,0.99871,0.98453,0.99871,2.66,0,,,True,none,89.473,89.065,0.4081
+25.0,constant_impedance,76.175,19.044,2025-09-01 06:07:00,118.159,0.98466,0.99871,0.98466,0.99871,2.64,0,,,True,none,89.27,88.864,0.4065
+25.0,mixed,76.492,19.123,2025-09-01 06:05:00,118.145,0.98454,0.99871,0.98454,0.99871,2.66,0,,,True,none,89.453,89.045,0.4079

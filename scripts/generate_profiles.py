@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Generate deterministic placeholder household-demand and water-draw profiles.
 
-The course package supplies the real datasets.  This script creates a
-reproducible stand-in so the GridLAB-D skeleton can be executed before those
-files are available.  Replace ``data/input/*.csv`` with the supplied datasets
-and re-run this script (or write player files directly) for the real study.
+This is a fallback for environments without the supplied datasets.  The normal
+workflow is ``scripts/prepare_real_profiles.py``, which selects three real
+``data/input/house_profile_*.csv`` files.  Because this script overwrites the
+player files, it refuses to run when real profiles are present unless
+``--force`` is passed.
+
+Replace ``data/input/*.csv`` with the supplied datasets and re-run the real
+preparation script for the actual study.
 
 Units
 -----
@@ -34,7 +38,7 @@ INPUT_DIR = ROOT / "data" / "input"
 PLAYER_DIR = ROOT / "data" / "players"
 
 # One common simulated day.  Change these two values together with glm/model.glm.
-START = pd.Timestamp("2026-07-15 00:00:00")
+START = pd.Timestamp("2025-09-01 00:00:00")
 PERIODS = 24 * 60 + 1  # inclusive 00:00 through 24:00
 POWER_FACTOR = 0.95
 RANDOM_SEED = 530
@@ -154,7 +158,19 @@ def write_player_water(path: Path, water_gpm: pd.Series) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=RANDOM_SEED)
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite players even when real house_profile_*.csv files are present.",
+    )
     args = parser.parse_args()
+
+    if any(INPUT_DIR.glob("house_profile_*.csv")) and not args.force:
+        raise SystemExit(
+            "Real house profiles are present in data/input.  Use "
+            "scripts/prepare_real_profiles.py for the real study, or pass "
+            "--force to overwrite the players with synthetic placeholders."
+        )
 
     INPUT_DIR.mkdir(parents=True, exist_ok=True)
     PLAYER_DIR.mkdir(parents=True, exist_ok=True)

@@ -66,8 +66,8 @@ def ensure_players() -> None:
                 for index in (1, 2, 3) for kind in ("load", "water")]
     if all(path.exists() for path in required):
         return
-    print("Player files missing; generating deterministic placeholder profiles.")
-    subprocess.run([sys.executable, str(ROOT / "scripts" / "generate_profiles.py")], check=True)
+    print("Player files missing; preparing players from the supplied house profiles.")
+    subprocess.run([sys.executable, str(ROOT / "scripts" / "prepare_real_profiles.py")], check=True)
 
 
 def write_wrapper(case: str, xfmr_kva: float) -> Path:
